@@ -1,11 +1,13 @@
 # MCP Chat
 
-MCP Chat is a command-line interface application that enables interactive chat capabilities with AI models through the Anthropic API. The application supports document retrieval, command-based prompts, and extensible tool integrations via the MCP (Model Control Protocol) architecture.
+MCP Chat is a command-line interface application that enables interactive chat capabilities with AI models through OpenRouter API. The application supports document retrieval, command-based prompts, and extensible tool integrations via the MCP (Model Context Protocol) architecture.
+
+**Note**: This project has been migrated from Anthropic API to OpenRouter API for free access to AI models.
 
 ## Prerequisites
 
-- Python 3.9+
-- Anthropic API Key
+- Python 3.10+
+- OpenRouter API Key (free at [openrouter.ai](https://openrouter.ai))
 
 ## Setup
 
@@ -14,7 +16,9 @@ MCP Chat is a command-line interface application that enables interactive chat c
 1. Create or edit the `.env` file in the project root and verify that the following variables are set correctly:
 
 ```
-ANTHROPIC_API_KEY=""  # Enter your Anthropic API secret key
+OPENROUTER_API_KEY=""  # Enter your OpenRouter API key
+CLAUDE_MODEL=poolside/laguna-m.1:free  # Free model with tool calling support
+USE_UV=1
 ```
 
 ### Step 2: Install dependencies
@@ -29,20 +33,13 @@ ANTHROPIC_API_KEY=""  # Enter your Anthropic API secret key
 pip install uv
 ```
 
-2. Create and activate a virtual environment:
+2. Install dependencies:
 
 ```bash
-uv venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+uv sync
 ```
 
-3. Install dependencies:
-
-```bash
-uv pip install -e .
-```
-
-4. Run the project
+3. Run the project
 
 ```bash
 uv run main.py
@@ -60,7 +57,7 @@ source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 2. Install dependencies:
 
 ```bash
-pip install anthropic python-dotenv prompt-toolkit "mcp[cli]==1.8.0"
+pip install openai python-dotenv prompt-toolkit "mcp[cli]>=1.8.0"
 ```
 
 3. Run the project
@@ -94,6 +91,23 @@ Use the / prefix to execute commands defined in the MCP server:
 Commands will auto-complete when you press Tab.
 
 ## Development
+
+### MCP Inspector
+
+Use the MCP Inspector to test and debug your MCP server locally:
+
+```bash
+uv run mcp dev -- python mcp_server.py
+```
+
+This will open the MCP Inspector in your browser at `http://127.0.0.1:6274` (or similar port). In the inspector:
+
+1. Configure the connection:
+   - Command: `python`
+   - Args: `mcp_server.py`
+2. Click "Connect"
+3. Use "List Tools" to see available tools
+4. Test tools interactively
 
 ### Adding New Documents
 
