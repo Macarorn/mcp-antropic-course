@@ -12,14 +12,14 @@ from core.cli import CliApp
 
 load_dotenv()
 
-# Anthropic Config
+# OpenRouter Config
 claude_model = os.getenv("CLAUDE_MODEL", "")
-anthropic_api_key = os.getenv("ANTHROPIC_API_KEY", "")
+openrouter_api_key = os.getenv("OPENROUTER_API_KEY", "")
 
 
 assert claude_model, "Error: CLAUDE_MODEL cannot be empty. Update .env"
-assert anthropic_api_key, (
-    "Error: ANTHROPIC_API_KEY cannot be empty. Update .env"
+assert openrouter_api_key, (
+    "Error: OPENROUTER_API_KEY cannot be empty. Update .env"
 )
 
 

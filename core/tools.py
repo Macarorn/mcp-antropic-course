@@ -1,8 +1,7 @@
 import json
-from typing import Optional, Literal, List
+from typing import Optional, Literal, List, Dict, Any
 from mcp.types import CallToolResult, Tool, TextContent
 from mcp_client import MCPClient
-from anthropic.types import Message, ToolResultBlockParam
 
 
 class ToolManager:
@@ -40,7 +39,7 @@ class ToolManager:
         tool_use_id: str,
         text: str,
         status: Literal["success"] | Literal["error"],
-    ) -> ToolResultBlockParam:
+    ) -> Dict[str, Any]:
         """Builds a tool result part dictionary."""
         return {
             "tool_use_id": tool_use_id,
@@ -51,13 +50,15 @@ class ToolManager:
 
     @classmethod
     async def execute_tool_requests(
-        cls, clients: dict[str, MCPClient], message: Message
-    ) -> List[ToolResultBlockParam]:
+        cls, clients: dict[str, MCPClient], message: Any
+    ) -> List[Dict[str, Any]]:
         """Executes a list of tool requests against the provided clients."""
+        # Handle both OpenAI and Anthropic message formats
+        content = message.content if hasattr(message, 'content') else message
         tool_requests = [
-            block for block in message.content if block.type == "tool_use"
+            block for block in content if hasattr(block, 'type') and block.type == "tool_use"
         ]
-        tool_result_blocks: list[ToolResultBlockParam] = []
+        tool_result_blocks: list[Dict[str, Any]] = []
         for tool_request in tool_requests:
             tool_use_id = tool_request.id
             tool_name = tool_request.name
