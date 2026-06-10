@@ -6,16 +6,19 @@ from mcp_client import MCPClient
 
 class ToolManager:
     @classmethod
-    async def get_all_tools(cls, clients: dict[str, MCPClient]) -> list[Tool]:
-        """Gets all tools from the provided clients."""
+    async def get_all_tools(cls, clients: dict[str, MCPClient]) -> list[Dict[str, Any]]:
+        """Gets all tools from the provided clients in OpenAI format."""
         tools = []
         for client in clients.values():
             tool_models = await client.list_tools()
             tools += [
                 {
-                    "name": t.name,
-                    "description": t.description,
-                    "input_schema": t.inputSchema,
+                    "type": "function",
+                    "function": {
+                        "name": t.name,
+                        "description": t.description,
+                        "parameters": t.inputSchema,
+                    }
                 }
                 for t in tool_models
             ]
@@ -53,7 +56,57 @@ class ToolManager:
         cls, clients: dict[str, MCPClient], message: Any
     ) -> List[Dict[str, Any]]:
         """Executes a list of tool requests against the provided clients."""
-        # Handle both OpenAI and Anthropic message formats
+        # Handle OpenAI format
+        if hasattr(message, 'choices') and message.choices:
+            tool_calls = message.choices[0].message.tool_calls
+            
+            tool_result_blocks: list[Dict[str, Any]] = []
+            for tool_call in tool_calls:
+                tool_use_id = tool_call.id
+                tool_name = tool_call.function.name
+                tool_input = json.loads(tool_call.function.arguments)
+
+                client = await cls._find_client_with_tool(
+                    list(clients.values()), tool_name
+                )
+
+                if not client:
+                    tool_result_part = cls._build_tool_result_part(
+                        tool_use_id, "Could not find that tool", "error"
+                    )
+                    tool_result_blocks.append(tool_result_part)
+                    continue
+
+                try:
+                    tool_output: CallToolResult | None = await client.call_tool(
+                        tool_name, tool_input
+                    )
+                    
+                    items = []
+                    if tool_output:
+                        items = tool_output.content
+                    content_list = [
+                        item.text for item in items if isinstance(item, TextContent)
+                    ]
+                    
+                    # Format as OpenAI tool response
+                    tool_result_part = {
+                        "tool_call_id": tool_use_id,
+                        "role": "tool",
+                        "content": content_list[0] if content_list else ""
+                    }
+                except Exception as e:
+                    error_message = f"Error executing tool '{tool_name}': {e}"
+                    tool_result_part = {
+                        "tool_call_id": tool_use_id,
+                        "role": "tool",
+                        "content": json.dumps({"error": error_message})
+                    }
+
+                tool_result_blocks.append(tool_result_part)
+            return tool_result_blocks
+        
+        # Handle Anthropic format
         content = message.content if hasattr(message, 'content') else message
         tool_requests = [
             block for block in content if hasattr(block, 'type') and block.type == "tool_use"

@@ -11,13 +11,17 @@ class Claude:
         self.model = model
 
     def add_user_message(self, messages: list, message):
-        user_message = {
-            "role": "user",
-            "content": message.content
-            if hasattr(message, "content")
-            else message,
-        }
-        messages.append(user_message)
+        # Handle tool results (OpenAI format)
+        if isinstance(message, list) and message and "tool_call_id" in message[0]:
+            messages.extend(message)  # Add tool results as separate messages
+        else:
+            user_message = {
+                "role": "user",
+                "content": message.content
+                if hasattr(message, "content")
+                else message,
+            }
+            messages.append(user_message)
 
     def add_assistant_message(self, messages: list, message):
         # Handle OpenAI format

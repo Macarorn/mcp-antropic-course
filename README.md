@@ -109,6 +109,16 @@ This will open the MCP Inspector in your browser at `http://127.0.0.1:6274` (or 
 3. Use "List Tools" to see available tools
 4. Test tools interactively
 
+### Testing MCP Client
+
+To test the MCP client independently:
+
+```bash
+uv run mcp_client.py
+```
+
+This will list all available tools from the MCP server.
+
 ### Adding New Documents
 
 Edit the `mcp_server.py` file to add new documents to the `docs` dictionary.
